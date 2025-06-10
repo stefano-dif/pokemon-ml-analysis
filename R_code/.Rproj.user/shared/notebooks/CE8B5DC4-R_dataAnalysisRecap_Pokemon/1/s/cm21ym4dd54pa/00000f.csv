@@ -1,0 +1,4 @@
+"0","pk_stats <- gather(pokemon, ""hp"", ""attack"", ""defense"", ""sp_attack"", ""sp_defense"", ""speed"","
+"0","                   key = ""statistic"", value = ""score"")"
+"0",""
+"0","pk_stats <- pk_stats[, c(""pokedex_number"", ""name"", ""statistic"", ""score"")]"

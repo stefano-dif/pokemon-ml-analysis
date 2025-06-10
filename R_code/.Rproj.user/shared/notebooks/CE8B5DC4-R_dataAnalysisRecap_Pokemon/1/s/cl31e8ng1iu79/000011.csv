@@ -1,0 +1,9 @@
+"0","pk_classes %>%
+  select_if(~ !any(is.na(.))) %>%  colnames()
+"
+"1","[1]"
+"1"," ""pokedex_number"""
+"1"," ""first""         "
+"1"," ""second""        "
+"1","
+"

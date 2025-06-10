@@ -1,0 +1,205 @@
+---
+title: "R data analysis recap with Pokemon"
+format: html
+editor: visual
+---renv
+editor_options: 
+  chunk_output_type: inline
+---
+
+## R data analysis recap with Pokémon
+
+```{r}
+library(readr)
+library(tibble)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+path <- "../data/pokemon_cleaned.csv"
+pokemon <- read_csv(path)[, -1]
+
+print(class(pokemon))
+pokemon %>% head(5)
+```
+
+```{r}
+glimpse(pokemon)
+```
+
+
+```{r}
+pk_stats <- gather(pokemon, "hp", "attack", "defense", "sp_attack", "sp_defense", "speed",
+                   key = "statistic", value = "score")
+
+pk_stats <- pk_stats[, c("pokedex_number", "name", "statistic", "score")]
+```
+
+```{r}
+pk_stats[pk_stats$pokedex_number == 308, ]
+```
+
+```{r}
+pk_stats %>% spread(key = "statistic", value = "score") %>% 
+  filter(pokedex_number == 308)
+```
+
+
+```{r}
+pokemon["classification"] %>% 
+  mutate(n_words = lengths(strsplit(classification, split = " "))) %>% 
+  select(n_words) %>% max() -> max_words_class
+
+print(paste("Max words in Pokemon classification is", as.character(max_words_class)))
+```
+
+
+```{r}
+pk_classes <- separate(pokemon, col = "classification",
+                       into = c("first", "second", "third", "fourth", "fifth"),
+                       sep = " ")[, c("pokedex_number", "first", "second", "third", "fourth", "fifth")]
+
+
+pk_classes[sample(1:nrow(pk_classes), 10), ]
+```
+
+```{r}
+drop_na(pk_classes)
+```
+
+```{r}
+print(drop_na(pk_classes) %>% nrow())
+print(drop_na(pk_classes, c("fourth")) %>% nrow())
+print(drop_na(pk_classes, c("third")) %>% nrow())
+print(drop_na(pk_classes, c("second")) %>% nrow())
+print(drop_na(pk_classes, c("first")) %>% nrow())
+```
+
+```{r}
+pk_classes %>%
+  select_if(~ !any(is.na(.))) %>% colnames()
+```
+
+
+```{r}
+pokemon %>% 
+  count(generation)
+```
+
+```{r}
+pokemon %>% summarise_if(is.numeric, mean, na.rm = T)
+```
+
+```{r}
+pokemon %>% 
+  select(attack, sp_attack, speed) %>% 
+  summarise_if(is.numeric, c("mean", "sd"), na.rm = TRUE)
+```
+
+```{r}
+pokemon %>% 
+  group_by(generation) %>% 
+  select(attack, sp_attack, speed) %>%
+  summarise_if(is.numeric, c("mean", "sd"), na.rm = TRUE)
+```
+
+```{r}
+pokemon %>% 
+  group_by(generation) %>% 
+  summarise_at(vars(hp:speed), mean, na.rm = T)
+```
+
+
+
+
+```{r}
+pokemon %>% 
+  mutate(total_stats = hp + attack + sp_attack + defense +
+           sp_defense + speed) %>% 
+  select(pokedex_number, name, total_stats) %>% 
+  rename(num = pokedex_number, pokemon = name) %>% 
+  sample_n(10) %>% 
+  arrange(desc(total_stats), num)
+```
+
+
+```{r}
+pokemon %>% 
+  pull(hp) %>% 
+  cummean() %>% 
+  enframe(name = NULL) %>% 
+  .[c(1, nrow(pokemon)%/%2, nrow(pokemon)), ]
+```
+
+```{r}
+pokemon %>% 
+  pull(attack) %>% 
+  cume_dist() %>% 
+  enframe(name = "pokemon_num", value = "percentile") %>% 
+  ggplot(aes(x = pokemon_num, y = percentile))+
+  geom_line()
+```
+
+```{r}
+pokemon %>% 
+  pull(generation) %>% 
+  cume_dist() %>% 
+  unique()
+```
+
+
+```{r}
+ggplot(pokemon)+
+  geom_density(aes(x = attack, fill = factor(generation)), position = "fill")
+```
+
+```{r}
+pokemon %>% 
+  ggplot()+
+  geom_histogram(aes(x = attack, fill = factor(generation)), position = "stack")
+```
+
+```{r}
+ggplot(pokemon, aes(x = attack, y = defense))+
+  geom_point(aes(colour = factor(generation)))+
+  geom_smooth(method = "lm")+
+  facet_wrap(~factor(generation))
+```
+
+```{r}
+ggplot(pokemon, aes(x = type1, y = type2))+
+  geom_count()+
+  scale_x_discrete(guide = guide_axis(n.dodge = 3))
+```
+
+```{r}
+pokemon %>% 
+  mutate(power = hp + attack + defense + sp_attack + sp_defense + speed) %>% 
+  ggplot(aes(x = factor(generation), y = power))+
+  geom_boxplot(aes(fill = factor(generation)))
+```
+
+```{r}
+pokemon %>% 
+  mutate(power = hp + attack + defense + sp_attack + sp_defense + speed) %>% 
+  ggplot(aes(x = factor(generation), y = power))+
+  geom_boxplot(aes(fill = factor(generation)))+
+  facet_wrap(~is_legendary)
+```
+
+```{r}
+pokemon %>% 
+  ggplot()+
+  geom_bar(aes(x = reorder(factor(generation),
+                           (pokemon %>% 
+                              group_by(generation) %>% 
+                              summarise(n = n()) %>% 
+                              right_join(pokemon, by = "generation") %>% 
+                              pull(n))),
+               fill = factor(generation)))+
+  geom_abline(aes(intercept = nrow(pokemon)/7, slope = 0), size = 1.5)+
+  ylab("# of pokemons") + xlab("generation")+
+  coord_flip()
+```

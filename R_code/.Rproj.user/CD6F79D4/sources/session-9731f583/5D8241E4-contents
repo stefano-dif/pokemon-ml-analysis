@@ -1,0 +1,304 @@
+---
+title: "R data analysis recap with Pokemon"
+format: html
+editor: visual
+---renv
+---
+
+## R data analysis recap with Pokémon
+
+```{r}
+library(readr)
+library(tibble)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+#| echo: False
+address <- r"(C:\Users\sdifi\OneDrive - Università Commerciale Luigi Bocconi\Code\MachineLearning_practice\dataAnalysis\dataAnalysis_Pokemon\pokemon_cleaned.csv)"
+pokemon <- read_csv(address)[, -1]
+typeof(pokemon); class(pokemon)
+```
+
+```{r}
+head(pokemon)
+```
+
+```{r}
+#|echo: False
+glimpse(pokemon)
+```
+
+```{r}
+df <- gather(pokemon, 'hp', 'attack', 'defense', 'sp_attack', 'sp_defense', 'speed', key = 'statistic', value = 'score')
+df[df$pokedex_number == 18, c('pokedex_number', 'name', 'statistic', 'score')]
+```
+
+```{r}
+pk_stats <- gather(pokemon, "hp", "attack", "defense", "sp_attack", "sp_defense", "speed",
+                   key = "statistic", value = "score")
+
+pk_stats <- pk_stats[, c("pokedex_number", "name", "statistic", "score")]
+```
+
+```{r}
+pk_stats[pk_stats$pokedex_number == 308, ]
+```
+
+```{r}
+pk_stats %>% spread(key = "statistic", value = "score") %>% 
+  filter(pokedex_number == 308)
+```
+
+```{r}
+pk_classes <- separate(pokemon, col = "classification",
+         into = c("first", "second", "third", "fourth", "fifth"),
+         sep = " ")[, 
+                     c("pokedex_number", "first", "second", "third", "fourth", "fifth")]
+
+pk_classes[sample(1:nrow(pk_classes), 10), ]
+```
+
+```{r}
+drop_na(pk_classes)
+```
+
+```{r}
+drop_na(pk_classes, c("third", "fourth"))
+```
+
+```{r}
+pk_classes %>%
+  select_if(~ !any(is.na(.))) 
+```
+
+```{r}
+pk_classes %>% 
+  fill("third", .direction = "down")
+```
+
+```{r}
+pk_classes %>% 
+  replace_na(list(third = 'x3', fourth = 'x4', fifth = 'x5'))
+```
+
+```{r}
+pokemon %>% 
+  filter(pokedex_number >= 1, pokedex_number <= 15) %>% 
+  summarise(avg_hp = mean(hp), avg_speed = mean(speed))
+```
+
+```{r}
+pokemon %>% 
+  count(generation)
+```
+
+```{r}
+pokemon %>% summarise_if(is.numeric, mean, na.rm = T)
+```
+
+```{r}
+pokemon %>% 
+  select(attack, sp_attack, speed) %>% 
+  summarise_if(is.numeric, c("mean", "sd"), na.rm = TRUE)
+```
+
+```{r}
+pokemon %>% 
+  group_by(generation) %>% 
+  select(attack, sp_attack, speed) %>%
+  summarise_if(is.numeric, c("mean", "sd"), na.rm = TRUE)
+```
+
+```{r}
+pokemon %>% 
+  group_by(generation) %>% 
+  summarise_at(vars(hp:speed), mean, na.rm = T)
+```
+
+```{r}
+pokemon %>% 
+filter(generation != 6 & generation != 7 & is_legendary == 1) %>% 
+sample_frac(0.2) %>% 
+slice(3:6) %>% 
+arrange(desc(hp), speed) %>% 
+top_n(1, attack)
+```
+
+```{r}
+pokemon %>% 
+  filter(generation != 6 & generation != 7 & is_legendary == 1) %>% 
+  sample_frac(0.2) %>% 
+  slice(3:6) %>% 
+  arrange(desc(hp), speed) %>% 
+  top_n(1, attack)
+```
+
+```{r}
+pokemon %>% 
+  add_row(name = 'Diglett-Alola', generation = NaN, .before = 51) %>% 
+  slice(45:55)
+```
+
+```{r}
+pokemon %>% 
+  select(pokedex_number, starts_with('ability')) %>% 
+  head()
+```
+
+```{r}
+pokemon %>% 
+  pull(name) %>%
+  .[1:10]
+```
+
+```{r}
+pokemon %>% 
+  mutate(total_stats = hp + attack + sp_attack + defense +
+           sp_defense + speed) %>% 
+  select(pokedex_number, name, total_stats) %>% 
+  rename(num = pokedex_number, pokemon = name) %>% 
+  sample_n(10) %>% 
+  arrange(desc(total_stats), num)
+```
+
+```{r}
+pokemon %>% 
+  mutate_if(is.numeric, funs(log, exp)) %>% 
+  select_if(is.numeric) %>% 
+  sample(4) %>% 
+  head()
+```
+
+```{r}
+pokemon %>% 
+  pull(hp) %>% 
+  cummean() %>% 
+  enframe(name = NULL) %>% 
+  .[c(1, nrow(pokemon)%/%2, nrow(pokemon)), ]
+```
+
+```{r}
+pokemon %>% 
+  pull(attack) %>% 
+  cume_dist() %>% 
+  enframe(name = "pokemon_num", value = "percentile") %>% 
+  ggplot(aes(x = pokemon_num, y = percentile))+
+  geom_line()
+```
+
+```{r}
+pokemon %>% 
+  pull(generation) %>% 
+  cume_dist() %>% 
+  unique()
+```
+
+```{r}
+pokemon %>% 
+  summarise(n = n(), sd_hp = sd(hp), IQR_attack = IQR(attack))
+```
+
+```{r}
+bind_cols(pk_classes, pk_classes) %>% 
+  head()
+```
+
+```{r}
+pk_classes %>% 
+  sample_frac(0.5) -> temp1
+
+pk_stats %>% 
+  sample_frac(0.1) -> temp2
+```
+
+```{r}
+left_join(temp1, temp2, by = "pokedex_number")
+```
+
+```{r}
+inner_join(temp1, temp2, by = "pokedex_number")
+```
+
+```{r}
+right_join(temp1, temp2, by = "pokedex_number")
+```
+
+```{r}
+full_join(temp1, temp2, by = "pokedex_number")
+```
+
+```{r}
+anti_join(temp1, temp2, by = "pokedex_number")
+```
+
+```{r}
+semi_join(temp1, temp2, by = "pokedex_number")
+```
+
+```{r}
+ggplot(pokemon)+
+  geom_density(aes(x = attack, fill = factor(generation)), position = "fill")
+```
+
+```{r}
+pokemon %>% 
+  ggplot()+
+  geom_histogram(aes(x = attack, fill = factor(generation)), position = "stack")
+```
+
+```{r}
+ggplot(pokemon, aes(x = attack, y = defense))+
+  geom_point(aes(colour = factor(generation)))+
+  geom_smooth(method = "lm")+
+  facet_wrap(~factor(generation))
+```
+
+```{r}
+ggplot(pokemon, aes(x = type1, y = type2))+
+  geom_count()+
+  scale_x_discrete(guide = guide_axis(n.dodge = 3))
+```
+
+```{r}
+pokemon %>% 
+  mutate(power = hp + attack + defense + sp_attack + sp_defense + speed) %>% 
+  ggplot(aes(x = factor(generation), y = power))+
+  geom_boxplot(aes(fill = factor(generation)))
+```
+
+```{r}
+pokemon %>% 
+  mutate(power = hp + attack + defense + sp_attack + sp_defense + speed) %>% 
+  ggplot(aes(x = factor(generation), y = power))+
+  geom_boxplot(aes(fill = factor(generation)))
+```
+
+```{r}
+pokemon %>% 
+ggplot()+
+geom_bar(aes(x = reorder(factor(generation), 
+                         (pokemon %>% 
+                        group_by(generation) %>% 
+                        summarise(n = n()) %>% 
+                        right_join(pokemon, by = 'generation') %>% 
+                        pull(n))), 
+             fill = factor(generation)))+
+geom_abline(aes(intercept = nrow(pokemon)/7, slope = 0), size = 1.5)+
+ylab('# of pokemons') + xlab('generation')+
+coord_flip()
+```
+
+```{r}
+pokemon %>% 
+  ggplot()+
+  geom_bar(aes(x = reorder(factor(generation),
+                           (pokemon %>% 
+                              group_by(generation) %>% 
+                              summarise(n = n()) %>% 
+                              right_join(pokemon, by = "generation") %>% 
+                              pull(n)))),
+           fill = factor(generation))
+```
