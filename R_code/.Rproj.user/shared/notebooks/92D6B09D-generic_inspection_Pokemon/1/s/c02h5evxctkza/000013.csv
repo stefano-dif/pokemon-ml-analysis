@@ -1,5 +1,0 @@
-"0","pokemon %>% "
-"0","  pull(hp) %>% "
-"0","  cummean() %>% "
-"0","  enframe(name = NULL) %>% "
-"0","  .[c(1, nrow(pokemon)%/%2, nrow(pokemon)), ]"

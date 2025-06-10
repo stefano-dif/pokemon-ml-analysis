@@ -1,3 +1,0 @@
-"0","pokemon %>% "
-"0","  group_by(generation) %>% "
-"0","  summarise_at(vars(hp:speed), mean, na.rm = T)"

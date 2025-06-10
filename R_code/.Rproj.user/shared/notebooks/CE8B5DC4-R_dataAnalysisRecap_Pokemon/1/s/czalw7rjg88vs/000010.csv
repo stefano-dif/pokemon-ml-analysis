@@ -1,6 +1,0 @@
-"0","pokemon %>% "
-"0","  filter(generation != 6 & generation != 7 & is_legendary == 1) %>% "
-"0","  sample_frac(0.2) %>% "
-"0","  slice(3:6) %>% "
-"0","  arrange(desc(hp), speed) %>% "
-"0","  top_n(1, attack)"

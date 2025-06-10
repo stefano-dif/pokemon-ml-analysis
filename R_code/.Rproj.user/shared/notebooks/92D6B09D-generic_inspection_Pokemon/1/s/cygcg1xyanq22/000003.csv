@@ -1,5 +1,0 @@
-"0","pokemon %>% "
-"0","  mutate(power = hp + attack + defense + sp_attack + sp_defense + speed) %>% "
-"0","  ggplot(aes(x = factor(generation), y = power))+"
-"0","  geom_boxplot(aes(fill = factor(generation)))+"
-"0","  facet_wrap(~is_legendary)"

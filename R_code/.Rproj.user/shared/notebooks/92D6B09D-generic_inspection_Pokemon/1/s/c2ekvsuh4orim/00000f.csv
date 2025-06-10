@@ -1,7 +1,0 @@
-"0","pokemon %>% "
-"0","  mutate(total_stats = hp + attack + sp_attack + defense +"
-"0","           sp_defense + speed) %>% "
-"0","  select(pokedex_number, name, total_stats) %>% "
-"0","  rename(num = pokedex_number, pokemon = name) %>% "
-"0","  sample_n(10) %>% "
-"0","  arrange(desc(total_stats), num)"

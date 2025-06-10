@@ -1,4 +1,0 @@
-"0","pokemon %>% "
-"0","  group_by(generation) %>% "
-"0","  select(attack, sp_attack, speed) %>%"
-"0","  summarise_if(is.numeric, c(""mean"", ""sd""), na.rm = TRUE)"
